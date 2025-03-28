@@ -20,7 +20,7 @@ solo = box(pos=vector(bola.pos.x, -1.75, 0), size=vector(20, 5, 100), color=colo
 # Condições iniciais
 v0 = 50
 theta = 30 * pi / 180
-g = vector(0, -10, 0)
+g = vector(0, -9.8, 0)
 
 # Se a altura inicial for maior que zero, ajustamos a velocidade inicial vertical
 if altura_inicial > 0:
