@@ -12,9 +12,17 @@ Objetos_espaciais = {
     "Lua": 1.62
 }
 
+cores_background = [
+    vector(0.1176, 0.5647, 1.0000),  # Azul (#1E90FF) - Terra
+    vector(1.0000, 0.2706, 0.0000),  # Laranja avermelhado (#FF4500) - Marte
+    vector(0.8235, 0.7059, 0.5490),  # Bege (#D2B48C) - Júpiter
+    vector(1.0000, 0.8431, 0.0000),  # Dourado (#FFD700) - Vênus
+    vector(0.7529, 0.7529, 0.7529)   # Cinza (#C0C0C0) - Lua
+]
 def simulacao_visual():
 
     planeta = var_planeta.get()
+    index = planeta.index(planeta)
     gravidade = Objetos_espaciais[planeta]
 
     # Pegando os valores da interface
@@ -29,7 +37,8 @@ def simulacao_visual():
     razao_nova = razao * 11.904
 
     # Criando a cena 3D
-    scene = canvas(width=900, height=700)
+    scene = canvas(title=f"Simulação em {planeta}", width=900, height=700)
+    scene.background = cores_background[index]
     scene.select()
     
     bola = sphere(pos=vector(0, altura_inicial, 0), radius=0.5, color=color.white, make_trail=True)
@@ -81,11 +90,11 @@ def simulacao_visual():
             h_max_quicada = (v0 ** 2 * sin(theta) ** 2) / (2 * abs(g.y))
             soma_alturas += h_max_quicada
             
-            erro_relativo = abs(h_max_quicada - h_max_anterior) / abs(h_max_anterior) 
+            #erro_relativo = abs(h_max_quicada - h_max_anterior) / abs(h_max_anterior)
+            erro_absoluto = abs(h_max_quicada - h_max_anterior)
 
-            print(f"Quicada {quicadas}: Altura = {h_max_quicada:.2f}, Erro Relativo = {erro_relativo:.4f}")
-            if erro_relativo < 1e-4:
-                break
+            print(f"Quicada {quicadas}: Altura = {h_max_quicada}, Erro Absoluto = {erro_absoluto:.4f}")
+            if erro_absoluto < 1e-3: break
 
             h_max_anterior = h_max_quicada
 
@@ -96,7 +105,7 @@ def simulacao_visual():
 
     print(f"\nAltura inicial(1): {altura_inicial} metros")
     print(f"Razão(1): {razao}")
-    print(f"Número de movimentos(1): {num_quicadas}")
+    print(f"Número de movimentos(1): {quicadas}")
     print(f"\nSoma geométrica das alturas(1): {soma_alturas:.2f} metros")
     print(f"Soma geométrica das distâncias(1): {soma_distancias:.2f} metros")
 
