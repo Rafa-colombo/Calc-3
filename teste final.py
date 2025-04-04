@@ -41,7 +41,7 @@ def simulacao_visual():
     scene.background = cores_background[index]
     scene.select()
     
-    bola = sphere(pos=vector(0, altura_inicial, 0), radius=0.5, color=color.white, make_trail=True)
+    bola = sphere(pos=vector(0, altura_inicial, 0), radius=0.2, color=color.white, make_trail=True)
     solo = box(pos=vector(bola.pos.x, -1.75, 0), size=vector(0.1, 0.1, 0.1), color=color.orange, make_trail=True)
     
     # Condições iniciais
