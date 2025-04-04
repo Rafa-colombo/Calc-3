@@ -22,7 +22,8 @@ cores_background = [
 def simulacao_visual():
 
     planeta = var_planeta.get()
-    index = planeta.index(planeta)
+    index = list(Objetos_espaciais.keys()).index(planeta)
+    print(index)
     gravidade = Objetos_espaciais[planeta]
 
     # Pegando os valores da interface
@@ -37,7 +38,7 @@ def simulacao_visual():
     razao_nova = razao * 11.904
 
     # Criando a cena 3D
-    scene = canvas(title=f"Simulação em {planeta}", width=900, height=700)
+    scene = canvas(title=f"Simulação {planeta}", width=800, height=600)
     scene.background = cores_background[index]
     scene.select()
     
@@ -146,7 +147,7 @@ razao_entry.insert(0, "0.5")
 tk.Label(janela, text="Altura Inicial:").pack()
 altura_entry = tk.Entry(janela)
 altura_entry.pack()
-altura_entry.insert(0, "10")
+altura_entry.insert(0, "5")
 
 # Menu suspenso para selecionar o Planeta
 tk.Label(janela, text="Selecione um objeto espacial:").pack()
