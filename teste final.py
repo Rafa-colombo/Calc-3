@@ -2,89 +2,156 @@ import vpython
 from vpython import *
 import math
 import time
+import tkinter as tk
 
-# Entrada de valores pelo console
-razao = 1.2#float(input("Defina a razão da progressão geométrica: "))
-num_quicadas = 10#int(input("Escolha o número de movimentos: "))
-altura_inicial = 0#float(input("Defina a altura inicial da bola: "))
+Objetos_espaciais = {
+    "Terra": 9.81,
+    "Marte": 3.71,
+    "Júpiter": 24.79,
+    "Vênus": 8.87,
+    "Lua": 1.62
+}
 
-# Definições da cena
-scene.background = color.black
-scene.width = 800  # Largura 
-scene.height = 600 # Altura
+def simulacao_visual():
 
-# Objetos
-bola = sphere(pos=vector(-800, altura_inicial, 0), radius=1.5, color=color.white, make_trail=True)
-solo = box(pos=vector(bola.pos.x, -1.75, 0), size=vector(20, 5, 100), color=color.orange, make_trail=True)
+    planeta = var_planeta.get()
+    gravidade = Objetos_espaciais[planeta]
 
-# Condições iniciais
-v0 = 50
-theta = 30 * pi / 180
-g = vector(0, -9.8, 0)
+    # Pegando os valores da interface
+    razao = float(razao_entry.get())
+    if razao < 0 or razao > 1:
+        resultado_texto.config(state=tk.NORMAL)  # Habilita edição no Text
+        resultado_texto.delete(1.0, tk.END)  # Limpa os resultados anteriores
+        resultado_texto.insert(tk.END, f"Razão inserida não condiz com realidade({razao}).\nDigite novo valor.\n")
+        return
 
-# Se a altura inicial for maior que zero, ajustamos a velocidade inicial vertical
-if altura_inicial > 0:
-    bola.v = vector(0, 0, 0)  # Começamos com a bola parada e ela cairá devido à gravidade
-else:
-    bola.v = vector(v0 * cos(theta), v0 * sin(theta), 0)
+    altura_inicial = float(altura_entry.get())
+    razao_nova = razao * 11.904
 
-t = 0
-dt = 0.001
-
-# Soma geométrica das alturas e distâncias
-soma_alturas = 0
-soma_distancias = 0
-
-# Se a altura inicial for zero, calculamos a altura máxima normal; caso contrário, começamos da altura inicial
-if altura_inicial == 0:
-    h_max_inicial = (v0 ** 2 * sin(theta) ** 2) / (2 * abs(g.y))
-else:
-    h_max_inicial = altura_inicial  # Iniciamos com a altura fornecida
-soma_alturas += h_max_inicial
-
-# Contador de quicadas
-quicadas = 0
-
-# Equações do movimento
-while quicadas < num_quicadas:
+    # Criando a cena 3D
+    scene = canvas(width=900, height=700)
+    scene.select()
     
-    if num_quicadas <= 10:
-        rate(3000)
-    elif 10 < num_quicadas <= 20:
-        rate(8000)
+    bola = sphere(pos=vector(0, altura_inicial, 0), radius=0.5, color=color.white, make_trail=True)
+    solo = box(pos=vector(bola.pos.x, -1.75, 0), size=vector(0.1, 0.1, 0.1), color=color.orange, make_trail=True)
+    
+    # Condições iniciais
+    v0 = 10
+    theta = 30 * pi / 180
+    g = vector(0, -gravidade, 0)
+    
+    if altura_inicial > 0:
+        bola.v = vector(0, 0, 0)  # Solta a bola de altura n
     else:
-        rate(20000)
+        bola.v = vector(v0 * cos(theta), v0 * sin(theta), 0) # Lançamento da bola(sai do chao)
 
-    bola.v = bola.v + g * dt
-    bola.pos = bola.pos + bola.v * dt
-    t = t + dt
-
-    solo.pos.x = bola.pos.x 
-
-    # Se a bola atingir o solo e estiver caindo, ocorre uma quicada
-    if bola.pos.y <= solo.pos.y + bola.radius and bola.v.y < 0:
-        quicadas += 1
-        v0 *= razao
-        bola.v = vector(v0 * cos(theta), v0 * sin(theta), 0)
-
-        # Atualizar a altura máxima após colisão
-        h_max_quicada = (v0 ** 2 * sin(theta) ** 2) / (2 * abs(g.y))
-        soma_alturas += h_max_quicada
-
-        # Atualizar a distância acumulada
-        distancia_acumulada = (bola.v.x * (2 * v0 * sin(theta) / abs(g.y)))
-        soma_distancias += distancia_acumulada
-
-# Exibir valores no terminal
-print(f"\nAltura inicial: {altura_inicial} metros")
-print(f"Razão: {razao}")
-print(f"Número de movimentos: {num_quicadas}")
-print(f"\nSoma geométrica das alturas: {soma_alturas:.2f} metros")
-print(f"Soma geométrica das distâncias: {soma_distancias:.2f} metros")
-
-# Manter a tela de exibição aberta por 10 segundos
-while True:
+    t = 0
+    dt = 0.001
     
-    rate(10)
-    time.sleep(10)
-    break
+    soma_alturas = 0
+    soma_distancias = 0
+    
+    if altura_inicial == 0:
+        h_max_inicial = (v0 ** 2 * sin(theta) ** 2) / (2 * abs(g.y))
+    else:
+        h_max_inicial = altura_inicial  # Iniciamos com a altura fornecida
+    soma_alturas += h_max_inicial
+    
+    quicadas = 0
+    h_max_anterior = bola.pos.y
+    
+    while True:
+        
+        rate(750)
+
+        # Atualização da vel e posição da bola
+        bola.v = bola.v + g * dt # v = v0 + g.t
+        bola.pos = bola.pos + bola.v * dt # s = s0 + v.t
+        t += dt
+        
+        solo.pos.x = bola.pos.x #Pos do solo
+        
+        # Verificação colisão com solo
+        if bola.pos.y <= solo.pos.y + bola.radius and bola.v.y < 0:
+            quicadas += 1
+            v0 *= razao
+            bola.v = vector(v0 * cos(theta), v0 * sin(theta), 0)
+            
+            # Atualizar a altura máxima após colisão
+            h_max_quicada = (v0 ** 2 * sin(theta) ** 2) / (2 * abs(g.y))
+            soma_alturas += h_max_quicada
+            
+            erro_relativo = abs(h_max_quicada - h_max_anterior) / abs(h_max_anterior) 
+
+            print(f"Quicada {quicadas}: Altura = {h_max_quicada:.2f}, Erro Relativo = {erro_relativo:.4f}")
+            if erro_relativo < 1e-4:
+                break
+
+            h_max_anterior = h_max_quicada
+
+            # Atualizar a distância acumulada
+            distancia_acumulada = (bola.v.x * (2 * v0 * sin(theta) / abs(g.y)))
+            soma_distancias += distancia_acumulada
+
+
+    print(f"\nAltura inicial(1): {altura_inicial} metros")
+    print(f"Razão(1): {razao}")
+    print(f"Número de movimentos(1): {num_quicadas}")
+    print(f"\nSoma geométrica das alturas(1): {soma_alturas:.2f} metros")
+    print(f"Soma geométrica das distâncias(1): {soma_distancias:.2f} metros")
+
+    # Atualizando a área de resultados no Tkinter
+    resultado_texto.config(state=tk.NORMAL)  # Habilita edição no Text
+    resultado_texto.delete(1.0, tk.END)  # Limpa os resultados anteriores
+    resultado_texto.insert(tk.END, f"Altura inicial(1): {altura_inicial} metros\n")
+    resultado_texto.insert(tk.END, f"Razão(1): {razao}\n")
+    resultado_texto.insert(tk.END, f"Número de movimentos(1): {quicadas}\n--------------\n")
+    resultado_texto.insert(tk.END, f"Gravidade: {gravidade}\n")
+    resultado_texto.insert(tk.END, f"Planeta: {planeta} \n")
+    resultado_texto.insert(tk.END, f"Soma geométrica das alturas(1): {soma_alturas:.2f} metros\n")
+    resultado_texto.insert(tk.END, f"Soma geométrica das distâncias(1): {soma_distancias:.2f} metros\n")
+    resultado_texto.config(state=tk.DISABLED)  # Bloqueia edição do Text
+
+
+def printa_g():
+    planeta = var_planeta.get()
+    gravidade = Objetos_espaciais[planeta]
+
+    resultado_texto.config(state=tk.NORMAL)  # Habilita edição no Text
+    resultado_texto.delete(1.0, tk.END)  # Limpa os resultados anteriores
+    resultado_texto.insert(tk.END, f"Gravidade: {gravidade} \n")
+    resultado_texto.insert(tk.END, f"Planeta: {planeta} \n")
+
+
+# Criando a interface Tkinter
+janela = tk.Tk()
+janela.title("Simulação")
+janela.geometry("400x450") 
+
+# Entradas
+tk.Label(janela, text="Razão da Progressão Geométrica(Valor entre 0 e 1):").pack()
+razao_entry = tk.Entry(janela)
+razao_entry.pack()
+razao_entry.insert(0, "0.5")
+
+tk.Label(janela, text="Altura Inicial:").pack()
+altura_entry = tk.Entry(janela)
+altura_entry.pack()
+altura_entry.insert(0, "10")
+
+# Menu suspenso para selecionar o Planeta
+tk.Label(janela, text="Selecione um objeto espacial:").pack()
+var_planeta = tk.StringVar(value=list(Objetos_espaciais.keys())[0])
+tk.OptionMenu(janela, var_planeta, *Objetos_espaciais).pack()
+
+# Botões para iniciar as diferentes simulações
+tk.Button(janela, text="Iniciar Simulação (Simples)", command=simulacao_visual).pack()
+tk.Button(janela, text="Simulação (g)", command=printa_g).pack()
+
+# Área de resultados 
+tk.Label(janela, text="Resultados:").pack()
+resultado_texto = tk.Text(janela, height=12, width=50)
+resultado_texto.pack()
+resultado_texto.config(state=tk.DISABLED) 
+
+janela.mainloop()
