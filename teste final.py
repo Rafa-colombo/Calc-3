@@ -23,7 +23,6 @@ def simulacao_visual():
 
     planeta = var_planeta.get()
     index = list(Objetos_espaciais.keys()).index(planeta)
-    print(index)
     gravidade = Objetos_espaciais[planeta]
 
     # Pegando os valores da interface
