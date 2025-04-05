@@ -13,11 +13,11 @@ Objetos_espaciais = {
 }
 
 cores_background = [
-    vector(0.1176, 0.5647, 1.0000),  # Azul (#1E90FF) - Terra
-    vector(1.0000, 0.2706, 0.0000),  # Laranja avermelhado (#FF4500) - Marte
-    vector(0.8235, 0.7059, 0.5490),  # Bege (#D2B48C) - Júpiter
-    vector(1.0000, 0.8431, 0.0000),  # Dourado (#FFD700) - Vênus
-    vector(0.7529, 0.7529, 0.7529)   # Cinza (#C0C0C0) - Lua
+    vector(0.07056, 0.33882, 0.6000),  # Azul (#1E90FF) - Terra
+    vector(0.6000, 0.16236, 0.0000),  # Laranja avermelhado (#FF4500) - Marte
+    vector(0.4941, 0.42354, 0.3294),  # Bege (#D2B48C) - Júpiter
+    vector(0.6000, 0.50586, 0.0000),  # Dourado (#FFD700) - Vênus
+    vector(0.5, 0.5, 0.5)   # Cinza (#C0C0C0) - Lua
 ]
 def simulacao_visual():
 
@@ -37,7 +37,7 @@ def simulacao_visual():
     razao_nova = razao * 11.904
 
     # Criando a cena 3D
-    scene = canvas(title=f"Simulação {planeta}", width=800, height=600)
+    scene = canvas(title=f"Simulação {planeta}", width=900, height=400)
     scene.background = cores_background[index]
     scene.select()
     
@@ -72,6 +72,8 @@ def simulacao_visual():
     while True:
         
         rate(750)
+        # Reposiciona a camera a cada quicada
+        scene.camera.pos = vector(1 + quicadas*5/abs(g.y), 1, 1 - quicadas*0.8) 
 
         # Atualização da vel e posição da bola
         bola.v = bola.v + g * dt # v = v0 + g.t
