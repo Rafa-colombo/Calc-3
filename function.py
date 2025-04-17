@@ -20,12 +20,15 @@ cores_background = [
     vector(0.5, 0.5, 0.5)   # Cinza (#C0C0C0) - Lua
 ]
 
-Materiais_bolinha = {  # Densidade [g/cm³] e Coeficiente de Restituição (razão)
-    "Gelo": {"densidade": 0.92, "coef_restituicao": 0.07},
-    "Argila seca": {"densidade": 1.6, "coef_restituicao": 0.30},
-    "Cimento": {"densidade": 3.04, "coef_restituicao": 0.60},
-    "Ferro": {"densidade": 7.85, "coef_restituicao": 0.85},
-    "Ósmio": {"densidade": 22.5, "coef_restituicao": 0.90}
+Materiais_bolinha = {
+    "Borracha": {"densidade": 1.1, "coef_restituicao": 0.925},         
+    "Plástico (PVC)": {"densidade": 1.4, "coef_restituicao": 0.5},     
+    "Madeira": {"densidade": 0.8, "coef_restituicao": 0.4},            
+    "Gelo": {"densidade": 0.92, "coef_restituicao": 0.25},             
+    "Cimento": {"densidade": 2.3, "coef_restituicao": 0.55},           
+    "Ferro": {"densidade": 7.85, "coef_restituicao": 0.65},            
+    "Aço": {"densidade": 7.85, "coef_restituicao": 0.85},              
+    "Ósmio": {"densidade": 22.5, "coef_restituicao": 0.65}             
 }
 
 
@@ -127,12 +130,12 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
             # Atualizar a altura máxima após colisão
             h_max_quicada = (v0 ** 2 * sin(theta) ** 2) / (2 * abs(g.y))
             soma_alturas += h_max_quicada
-            print(f"h_max_quicada {h_max_quicada}, soma_alturas {soma_alturas}")
+            #print(f"h_max_quicada {h_max_quicada}, soma_alturas {soma_alturas}") # debug soma altura
             
             #erro_relativo = abs(h_max_quicada - h_max_anterior) / abs(h_max_anterior)
             erro_absoluto = abs(h_max_quicada - h_max_anterior)
 
-            #print(f"Quicada {quicadas}: Altura = {h_max_quicada}, Erro Absoluto = {erro_absoluto:.4f}") # debug soma altura
+            print(f"Quicada {quicadas}: Altura = {h_max_quicada}, Erro Absoluto = {erro_absoluto:.4f}") 
             if erro_absoluto < 1e-1 and razao != 1 : break
             elif razao == 1 and quicadas == 50 : break
            
