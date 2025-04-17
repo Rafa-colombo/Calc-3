@@ -20,36 +20,45 @@ cores_background = [
     vector(0.5, 0.5, 0.5)   # Cinza (#C0C0C0) - Lua
 ]
 
-Materiais_bolinha = { # g/cm^3 para calcular massa
-    "Gelo": 0.92,
-    "Argila seca": 1.6,
-    "Cimento": 3.04,
-    "Ferro ": 7.85,
-    "Ósmio": 22.5
+Materiais_bolinha = {  # Densidade [g/cm³] e Coeficiente de Restituição (razão)
+    "Gelo": {"densidade": 0.92, "coef_restituicao": 0.07},
+    "Argila seca": {"densidade": 1.6, "coef_restituicao": 0.30},
+    "Cimento": {"densidade": 3.04, "coef_restituicao": 0.60},
+    "Ferro": {"densidade": 7.85, "coef_restituicao": 0.85},
+    "Ósmio": {"densidade": 22.5, "coef_restituicao": 0.90}
 }
 
-def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_entry):
+
+def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_entry,usar_coef_material):
 
     planeta = var_planeta.get()
     index = list(Objetos_espaciais.keys()).index(planeta)
     gravidade = Objetos_espaciais[planeta]
-    index2 = var_bolinha.get()
-    Densidade = Materiais_bolinha[index2]
 
-    # Pegando os valores da interface
-    razao = float(razao_entry.get())
-    if razao < 0 or razao > 1:
-        print("")
+    material = var_bolinha.get()
+    propriedades_material = Materiais_bolinha[material]
+    Densidade = Materiais_bolinha[material]["densidade"]
+    if usar_coef_material:
+        razao = propriedades_material["coef_restituicao"]
+        print(f">>> Usando coef. do material: {razao}")
+    else:
+        # Pegando os valores da interface
+        razao = float(razao_entry.get())
+        print(f">>> Usando razão digitada: {razao}")
+
 
     altura_inicial = float(altura_entry.get())
 
     # Criando a cena 3D
-    scene = canvas(title=f"Simulação {planeta}", width=900, height=400)
+    scene = canvas(title=f"Simulação {planeta}", width=700, height=300)
     scene.background = cores_background[index]
     scene.select()
+
+    # Ajuste de centro da câmera
+    scene.center = vector(0, altura_inicial / 2, 0)  
     
-    bola = sphere(pos=vector(-15, altura_inicial, 0), radius=0.2, color=color.white, make_trail=True)
-    solo = box(pos=vector(bola.pos.x, -1.75, 0), size=vector(0.1, 0.1, 0.1), color=color.orange, make_trail=True)
+    bola = sphere(pos=vector(-5, altura_inicial, 0), radius=0.1, color=color.white, make_trail=True)
+    solo = box(pos=vector(bola.pos.x, -0.05, 0), size=vector(0.1, 0.1, 0.1), color=color.orange, make_trail=True)
     
     # Condições iniciais
     theta = 30 * pi / 180
@@ -65,14 +74,16 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
     if altura_inicial > 0:
         bola.v = vector(0, 0, 0)  # Solta a bola de altura n
         Energia_p = m * abs(g.y) * altura_inicial # Ep=m⋅g⋅h
-        v0_init = math.sqrt((2*Energia_p)/m)
+        v0_init = math.sqrt((2*Energia_p)/m) * (1 - math.exp(-(b / m) * altura_inicial)) # v0 = (√2*Ep)*(1-e^(b/m)⋅h)
+        print(f"\nEp: {Energia_p:.3f}J")
     else:
         v0_init = 10
-        bola.v = vector(v0 * cos(theta), v0 * sin(theta), 0) # Lançamento da bola(sai do chao)
-    print(f"\nb: {b} stokes m: {m} kg v0: {v0_init}\n")
+        bola.v = vector(v0_init * cos(theta), v0_init * sin(theta), 0) # Lançamento da bola(sai do chao)
+    print(f"\nb: {b} N·s/m m: {m:.6f} kg v0_init: {v0_init:.6f} m/s Densidade: {Densidade:.6f} g/cm^3\n")
 
     t = 0
     dt = 0.001
+    v0 = v0_init
     
     soma_alturas = 0
     soma_distancias = 0
@@ -86,7 +97,7 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
     quicadas = 0
     h_max_anterior = bola.pos.y
     
-    v0 = v0_init
+    
     while True:
         
         rate(750)
@@ -110,19 +121,21 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
         # Verificação colisão com solo
         if bola.pos.y <= solo.pos.y + bola.radius and bola.v.y < 0:
             quicadas += 1
-            v0 *= razao
+            v0 = razao * mag(bola.v)
             bola.v = vector(v0 * cos(theta), v0 * sin(theta), 0)
             
             # Atualizar a altura máxima após colisão
             h_max_quicada = (v0 ** 2 * sin(theta) ** 2) / (2 * abs(g.y))
             soma_alturas += h_max_quicada
+            print(f"h_max_quicada {h_max_quicada}, soma_alturas {soma_alturas}")
             
             #erro_relativo = abs(h_max_quicada - h_max_anterior) / abs(h_max_anterior)
             erro_absoluto = abs(h_max_quicada - h_max_anterior)
 
-            print(f"Quicada {quicadas}: Altura = {h_max_quicada}, Erro Absoluto = {erro_absoluto:.4f}")
-            if erro_absoluto < 1e-1: break
-
+            #print(f"Quicada {quicadas}: Altura = {h_max_quicada}, Erro Absoluto = {erro_absoluto:.4f}") # debug soma altura
+            if erro_absoluto < 1e-1 and razao != 1 : break
+            elif razao == 1 and quicadas == 50 : break
+           
             h_max_anterior = h_max_quicada
 
             # Atualizar a distância acumulada
@@ -148,15 +161,16 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
         f"Planeta: {planeta}\n"
         f"Soma geométrica das alturas(1): {soma_alturas:.2f} metros\n"
         f"Soma geométrica das distâncias(1): {soma_distancias:.2f} metros\n"
-        f"Arrasto b: {b:}\nMassa: {m:.6f}kg\nv0: {v0_init:.2f}m/s"
+        f"Arrasto b: {b:} N·s/m\nMassa: {m:.6f} kg\nv0: {v0_init:.6f} m/s"
     )
     resultado_texto.config(state=tk.DISABLED)  # Bloqueia edição do Text
 
 
 def printa_g(var_planeta,var_bolinha,resultado_texto):
     planeta = var_planeta.get()
-    index = var_bolinha.get()
-    Densidade = Materiais_bolinha[index]
+    material = var_bolinha.get()
+    Densidade = Materiais_bolinha[material]["densidade"]
+    razao = Materiais_bolinha[material]["coef_restituicao"]
     gravidade = Objetos_espaciais[planeta]
     massa =((4/3) * math.pi * math.pow(0.2, 3))*float(Densidade)
 
@@ -164,6 +178,6 @@ def printa_g(var_planeta,var_bolinha,resultado_texto):
     resultado_texto.delete(1.0, tk.END)  # Limpa os resultados anteriores
     resultado_texto.insert(tk.END, f"Gravidade: {gravidade} \n"
         f"Planeta: {planeta} \n"
-        f"Massa da bolinha: {massa} kg\n"  
+        f"Massa da bolinha: {massa:.3f} kg\nDensidade: {Densidade:.3f}"  
     )
 
