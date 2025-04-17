@@ -2,6 +2,9 @@ from vpython import *
 import math
 import time
 import tkinter as tk
+import numpy as np
+
+
 
 
 Objetos_espaciais = {
@@ -91,6 +94,8 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
     soma_alturas = 0
     soma_distancias = 0
     
+    lista_alturas = []
+
     if altura_inicial == 0:
         h_max_inicial = (v0 ** 2 * sin(theta) ** 2) / (2 * abs(g.y))
     else:
@@ -99,7 +104,7 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
     
     quicadas = 0
     h_max_anterior = bola.pos.y
-    
+    lista_alturas.append(h_max_inicial)
     
     while True:
         
@@ -130,13 +135,15 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
             # Atualizar a altura máxima após colisão
             h_max_quicada = (v0 ** 2 * sin(theta) ** 2) / (2 * abs(g.y))
             soma_alturas += h_max_quicada
+            lista_alturas.append(h_max_quicada)
             #print(f"h_max_quicada {h_max_quicada}, soma_alturas {soma_alturas}") # debug soma altura
             
             #erro_relativo = abs(h_max_quicada - h_max_anterior) / abs(h_max_anterior)
             erro_absoluto = abs(h_max_quicada - h_max_anterior)
 
             print(f"Quicada {quicadas}: Altura = {h_max_quicada}, Erro Absoluto = {erro_absoluto:.4f}") 
-            if erro_absoluto < 1e-1 and razao != 1 : break
+            if erro_absoluto < 1e-1 and razao < 0.51 : break
+            elif razao > 0.51 and erro_absoluto < 1e-4: break
             elif razao == 1 and quicadas == 50 : break
            
             h_max_anterior = h_max_quicada
@@ -145,7 +152,7 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
             distancia_acumulada = (bola.v.x * (2 * v0 * sin(theta) / abs(g.y)))
             soma_distancias += distancia_acumulada
 
-
+    plot_exp(lista_alturas)
     print(f"\nAltura inicial(1): {altura_inicial} metros")
     print(f"Razão(1): {razao}")
     print(f"Número de movimentos(1): {quicadas}")
@@ -184,3 +191,35 @@ def printa_g(var_planeta,var_bolinha,resultado_texto):
         f"Massa da bolinha: {massa:.3f} kg\nDensidade: {Densidade:.3f}"  
     )
 
+
+def plot_exp(lista_alturas):
+    """
+    Plota o valor de λ em função da altura (eixo Y: λ, eixo X: altura)
+    """
+
+    if not lista_alturas or len(lista_alturas) < 2:
+        print("Alturas insuficientes para plotagem.")
+        return
+
+    # Altura inicial (primeiro valor da lista)
+    h_0 = lista_alturas[0]
+    print("Alturas fornecidas:", lista_alturas)
+
+    # Cálculo do valor de λ para cada altura usando a fórmula
+    x_vals = np.arange(1, len(lista_alturas) + 1)  # Gera um array de índices (não começa de zero)
+    lambda_vals = np.log(h_0 / np.array(lista_alturas)) / x_vals  # λ = − ln(h0/h(x)) / x
+
+    # Criação do gráfico VPython
+    grafico = graph(title='Valor de λ vs Altura',
+                    xtitle='Altura (m)',
+                    ytitle='λ',
+                    width=600, height=300,
+                    background=color.white)
+
+    # Curva onde os valores serão plotados
+    curva_lambda = gcurve(color=color.blue, label='λ vs Altura')
+
+    # Plotando os valores de λ em função das alturas
+    for i, h in enumerate(lista_alturas):
+        if i == 0: pass
+        else: curva_lambda.plot(h, lambda_vals[i])
