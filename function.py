@@ -150,7 +150,7 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
             soma_distancias += distancia_acumulada
 
             print(f"Quicada {quicadas}: Altura = {h_max_quicada}, Erro Absoluto = {erro_absoluto:.4f}") 
-            if erro_absoluto < 1e-1: break
+            if erro_absoluto < 1e-3: break
             #elif razao > 0.51 and erro_absoluto < 1e-2: break
             elif razao == 1 and quicadas == 50 : break
 
@@ -195,10 +195,6 @@ def printa_g(var_planeta,var_bolinha,resultado_texto):
 
 
 def plot_exp(lista_alturas,lista_distancia):
-    """
-    Plota dois gráficos:
-    1. λ vs Altura
-    """
 
     if not lista_alturas or len(lista_alturas) < 2:
         print("Alturas insuficientes para plotagem.")
@@ -212,29 +208,26 @@ def plot_exp(lista_alturas,lista_distancia):
     lambda_vals = np.log(h_0 / np.array(lista_alturas[1:])) / np.array(lista_distancia[1:])  # λ = − ln(h0/h(x)) / x
     print("Lambdas:",len(lambda_vals), lambda_vals)
 
-    # Criação do gráfico altura
-    grafico_a = graph(title='Valor de λ vs Altura',
-                    xtitle='Altura (m)', ytitle='λ',
+   
+    grafico_a = graph(title='Valor de Altura (m) vs Quiques',
+                    xtitle='Quiques', ytitle='Altura',
                     width=500, height=300, background=color.white)
 
 
-    # Curva onde os valores serão plotados
-    curva_altura  = gcurve(graph=grafico_a,color=color.blue, label='λ vs Altura')
+    curva_altura  = gcurve(graph=grafico_a,color=color.blue, label='Altura (m) vs Quiques')
 
-    # Plotando os valores de λ em função das alturas
+
     for i, h in enumerate(lista_alturas[1:]):
         if i == 1: print("Alturas fornecidas:",len(lista_alturas), lista_alturas)
-        curva_altura.plot(h, lambda_vals[i])
+        curva_altura.plot(i, h)
 
   
-  # Criação do gráfico distancia
-    grafico_b = graph(title='Valor de λ vs Distancia',
-                    xtitle='Distancia (m)', ytitle='λ',
+    grafico_b = graph(title='Valor de Distancia vs Quiques',
+                    xtitle='Quiques', ytitle='Distancia (m)',
                     width=500, height=300, background=color.white)
 
-    curva_distancia  = gcurve(graph=grafico_b,color=color.red, label='λ vs Distancia')
+    curva_distancia  = gcurve(graph=grafico_b,color=color.red, label='Distancia (m) vs Quiques')
 
-    # Plotando os valores de λ em função da distancia percorrida
     for i, d in enumerate(lista_distancia[1:]):
-        if i == 1: print("DIstancias fornecidas:",len(lista_distancia), lista_distancia)
-        curva_distancia.plot(d, lambda_vals[i])
+        if i == 1: print("Distancias fornecidas:",len(lista_distancia), lista_distancia)
+        curva_distancia.plot(i, d)
