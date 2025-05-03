@@ -35,7 +35,7 @@ Materiais_bolinha = {
 }
 
 
-def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_entry,usar_coef_material):
+def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_entry,v0_entry,usar_coef_material):
 
     planeta = var_planeta.get()
     index = list(Objetos_espaciais.keys()).index(planeta)
@@ -54,6 +54,7 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
 
 
     altura_inicial = float(altura_entry.get())
+    v0 = float(v0_entry.get())
 
     # Criando a cena 3D
     scene = canvas(title=f"Simulação {planeta}", width=700, height=300)
@@ -67,94 +68,108 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
     solo = box(pos=vector(bola.pos.x, -0.05, 0), size=vector(0.1, 0.1, 0.1), color=color.orange, make_trail=True)
     
     # Condições iniciais
-    theta = 30 * pi / 180
+    theta = radians(45)   # Ângulo de lançamento
     g = vector(0, -gravidade, 0)
+    t = 0
+    dt = 0.001
 
     # Parametros de arrasto
     r   = bola.radius        # raio da bola [m]
     m   = ((4/3) * math.pi * math.pow(r, 3))*float(Densidade)      # Volume * Densidade
     eta = 1.81e-5            # viscosidade do ar [Pa·s]
     b   = 6 * math.pi * eta * r  # coeficiente de Stokes
-    
-    
-    if altura_inicial > 0:
-        bola.v = vector(0, 0, 0)  # Solta a bola de altura n
-        Energia_p = m * abs(g.y) * altura_inicial # Ep=m⋅g⋅h
-        v0_init = math.sqrt((2*Energia_p)/m) * (1 - math.exp(-(b / m) * altura_inicial)) # v0 = (√2*Ep)*(1-e^(b/m)⋅h)
-        print(f"Ep: {Energia_p:.3f}J")
-    else:
-        v0_init = 10
-        bola.v = vector(v0_init * cos(theta), v0_init * sin(theta), 0) # Lançamento da bola(sai do chao)
-    print(f"b: {b} N·s/m m: {m:.6f} kg v0_init: {v0_init:.6f} m/s Densidade: {Densidade:.6f} g/cm^3\n")
+    print(f"b: {b} N·s/m m: {m:.6f} kg v0: {v0} m/s Densidade: {Densidade:.6f} g/cm^3\n")
 
-    t = 0
-    dt = 0.001
-    v0 = v0_init
+
+    # Vel da bolinha nos eixos (derivada da aceleração de newton)
+    v0_x = v0 * math.cos(theta)
+    v0_y = v0 * math.sin(theta)
+
+    v_x = v0_x * math.exp(-b / m * t) # vel eixo x
+    v_y = v0_y + (g.y * m / b) * (math.exp(-b / m * t) - 1) # vel eixo y
+
+    print(f"Vel em x: {v_x} Vel em y: {v_y}")
+    bola.v = vector(v_x, v_y, 0)
     
-    soma_alturas = 0
-    soma_distancias = 0
     
     lista_alturas = []
-    lista_distancia = []
+    lista_distancias = []
+    soma_alturas = 0
+    soma_distancias = 0
 
-    if altura_inicial == 0:
-        h_max_inicial = (v0 ** 2 * sin(theta) ** 2) / (2 * abs(g.y))
-    else:
-        h_max_inicial = altura_inicial  # Iniciamos com a altura fornecida
-    soma_alturas += h_max_inicial
-    
+    altura_maxima_atual = bola.pos.y
+    posicao_x_anterior = bola.pos.x
+    detectando_altura = True
+
     quicadas = 0
+    
     h_max_anterior = bola.pos.y
-    lista_alturas.append(h_max_inicial)
+    lista_alturas.append(h_max_anterior)
     
     while True:
         
         rate(750)
        
+        # Atualização da vel e posição da bola
+        a_drag   = - (b/m) * bola.v       # vetor de aceleração de arrasto
+        a_x = a_drag.x       # aceleração total em x
+        a_y = g.y + a_drag.y # aceleração total em y
+                 
+        a_total = vector(a_x, a_y, 0) # aceleração total
+
+        bola.v += a_total * dt
+        bola.pos += bola.v * dt
+        t += dt
+        
+        solo.pos.x = bola.pos.x # Pos do solo
+
+
+        # Tratar razão errada
         if razao < 0 or razao > 1:
-            resultado_texto.config(state=tk.NORMAL)  # Habilita edição no Text
+            resultado_texto.config(state=tk.NORMAL)  
             resultado_texto.delete(1.0, tk.END)  # Limpa os resultados anteriores
             resultado_texto.insert(tk.END, f"Razão inserida não condiz com realidade({razao}).\nDigite novo valor.\n")
             if quicadas > 5: return
-
-        # Atualização da vel e posição da bola
-        a_drag   = - (b/m) * bola.v       # vetor de aceleração de arrasto
-        a_total  = g + a_drag             # aceleração total
-        bola.v   = bola.v + a_total * dt
-        bola.pos = bola.pos + bola.v * dt
-
-        t += dt
         
-        solo.pos.x = bola.pos.x #Pos do solo
-        
-        # Verificação colisão com solo
-        if bola.pos.y <= solo.pos.y + bola.radius and bola.v.y < 0:
-            quicadas += 1
-            v0 = razao * mag(bola.v)
-            bola.v = vector(v0 * cos(theta), v0 * sin(theta), 0)
-            
-            # Atualizar a altura máxima após colisão
-            h_max_quicada = (v0 ** 2 * sin(theta) ** 2) / (2 * abs(g.y))
-            soma_alturas += h_max_quicada
+        # ----- DETECTAR ALTURA MÁXIMA -----
+        if detectando_altura and bola.v.y < 1e-5: # margem de erro, v nunca zera
+            h_max_quicada = bola.pos.y
             lista_alturas.append(h_max_quicada)
-            #print(f"h_max_quicada {h_max_quicada}, soma_alturas {soma_alturas}") # debug soma altura
+            soma_alturas += bola.pos.y
+            detectando_altura = False
+
+        # ----- VERIFICA COLISÃO COM SOLO -----
+        if bola.pos.y <= solo.pos.y + bola.radius and bola.v.y < 0:
+
+            quicadas += 1
+            detectando_altura = True # Permite detectar prox altura
+            bola.pos.y = solo.pos.y + bola.radius # att pos bolinha para acima solo
+
+            # Salvar distância horizontal desde a última quicada
+            distancia_quicada = abs(bola.pos.x - posicao_x_anterior)
+            lista_distancias.append(distancia_quicada)
+            soma_distancias += distancia_quicada
+            posicao_x_anterior = bola.pos.x
+
+            # Velocidade  
+            vx = bola.v.x
+            vy = razao * bola.v.y
+
+            # Nova velocidade e energia reduzida (y invertido)
+            bola.v = vector(vx, -vy, 0)
+
+            if h_max_anterior != 0:
+                erro_a = abs(h_max_quicada - h_max_anterior) 
+
+            print(f"Quicada {quicadas}: Altura = {h_max_quicada}") 
+            print(f"Erro Relativo = {erro_a:.4f}")
             
-            #erro_relativo = abs(h_max_quicada - h_max_anterior) / abs(h_max_anterior)
-            erro_absoluto = abs(h_max_quicada - h_max_anterior)
-           
-            h_max_anterior = h_max_quicada
+            if erro_a < 1e-1:
+                print("Erro relativo abaixo do limiar. Encerrando simulação.")
+                break
 
-            # Atualizar a distância acumulada
-            distancia_acumulada = (bola.v.x * (2 * v0 * sin(theta) / abs(g.y)))
-            lista_distancia.append(distancia_acumulada)
-            soma_distancias += distancia_acumulada
 
-            print(f"Quicada {quicadas}: Altura = {h_max_quicada}, Erro Absoluto = {erro_absoluto:.4f}") 
-            if erro_absoluto < 1e-3: break
-            #elif razao > 0.51 and erro_absoluto < 1e-2: break
-            elif razao == 1 and quicadas == 50 : break
-
-    plot_exp(lista_alturas,lista_distancia)
+    plot_exp(lista_alturas,lista_distancias)
     print(f"\nAltura inicial(1): {altura_inicial} metros")
     print(f"Razão(1): {razao}")
     print(f"Número de movimentos(1): {quicadas}")
@@ -173,12 +188,12 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
         f"Planeta: {planeta}\n"
         f"Soma geométrica das alturas(1): {soma_alturas:.2f} metros\n"
         f"Soma geométrica das distâncias(1): {soma_distancias:.2f} metros\n"
-        f"Arrasto b: {b:} N·s/m\nMassa: {m:.6f} kg\nv0: {v0_init:.6f} m/s"
+        f"Arrasto b: {b:} N·s/m\nMassa: {m:.6f} kg\nv0: {v0:.6f} m/s"
     )
     resultado_texto.config(state=tk.DISABLED)  # Bloqueia edição do Text
 
 
-def printa_g(var_planeta,var_bolinha,resultado_texto):
+def printa_g(var_planeta,var_bolinha,resultado_texto,v0_entry):
     planeta = var_planeta.get()
     material = var_bolinha.get()
     Densidade = Materiais_bolinha[material]["densidade"]
@@ -194,7 +209,7 @@ def printa_g(var_planeta,var_bolinha,resultado_texto):
     )
 
 
-def plot_exp(lista_alturas,lista_distancia):
+def plot_exp(lista_alturas,lista_distancias):
 
     if not lista_alturas or len(lista_alturas) < 2:
         print("Alturas insuficientes para plotagem.")
@@ -202,10 +217,10 @@ def plot_exp(lista_alturas,lista_distancia):
 
     # Altura inicial (primeiro valor da lista)
     h_0 = lista_alturas[0]
-    lista_distancia = [0] + lista_distancia
+    lista_distancias = [0] + lista_distancias
 
     # Cálculo do valor de λ para cada altura usando a fórmula
-    lambda_vals = np.log(h_0 / np.array(lista_alturas[1:])) / np.array(lista_distancia[1:])  # λ = − ln(h0/h(x)) / x
+    lambda_vals = np.log(h_0 / np.array(lista_alturas[1:])) / np.array(lista_distancias[1:])  # λ = − ln(h0/h(x)) / x
     print("Lambdas:",len(lambda_vals), lambda_vals)
 
    
@@ -228,6 +243,6 @@ def plot_exp(lista_alturas,lista_distancia):
 
     curva_distancia  = gcurve(graph=grafico_b,color=color.red, label='Distancia (m) vs Quiques')
 
-    for i, d in enumerate(lista_distancia[1:]):
-        if i == 1: print("Distancias fornecidas:",len(lista_distancia), lista_distancia)
+    for i, d in enumerate(lista_distancias[1:]):
+        if i == 1: print("Distancias fornecidas:",len(lista_distancias), lista_distancias)
         curva_distancia.plot(i, d)

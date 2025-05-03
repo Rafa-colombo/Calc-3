@@ -17,6 +17,11 @@ altura_entry = tk.Entry(janela)
 altura_entry.pack()
 altura_entry.insert(0, "5")
 
+tk.Label(janela, text="v0 (força de lançamento): ").pack(pady=5)
+v0_entry = tk.Entry(janela)
+v0_entry.pack()
+v0_entry.insert(0, "10")
+
 # Frame para menus suspensos (lado a lado)
 frame_menus = tk.Frame(janela)
 frame_menus.pack(pady=10)
@@ -41,10 +46,10 @@ frame_botoes = tk.Frame(janela)
 frame_botoes.pack(pady=10)
 
 tk.Button(frame_botoes, text="Iniciar Simulação (Simples)", 
-        command=lambda: simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_entry,usar_coef_material.get())
+        command=lambda: simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_entry,v0_entry,usar_coef_material.get())
         ).pack(side=tk.LEFT, padx=10)
 tk.Button(frame_botoes, text="Simulação (g)", 
-        command=lambda: printa_g(var_planeta, var_bolinha, resultado_texto)
+        command=lambda: printa_g(var_planeta, var_bolinha, resultado_texto, v0_entry)
         ).pack(side=tk.LEFT, padx=10)
 
 # Área de resultados
