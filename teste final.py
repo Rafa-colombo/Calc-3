@@ -15,7 +15,7 @@ razao_entry.insert(0, "0.5")
 tk.Label(janela, text="Altura Inicial:").pack(pady=5)
 altura_entry = tk.Entry(janela)
 altura_entry.pack()
-altura_entry.insert(0, "5")
+altura_entry.insert(0, "0")
 
 tk.Label(janela, text="v0 (força de lançamento): ").pack(pady=5)
 v0_entry = tk.Entry(janela)

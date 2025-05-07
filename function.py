@@ -64,7 +64,7 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
     # Ajuste de centro da câmera
     scene.center = vector(0, altura_inicial / 2, 0)  
     
-    bola = sphere(pos=vector(-5, altura_inicial, 0), radius=0.1, color=color.white, make_trail=True)
+    bola = sphere(pos=vector(-1, altura_inicial, 0), radius=0.1, color=color.white, make_trail=True)
     solo = box(pos=vector(bola.pos.x, -0.05, 0), size=vector(0.1, 0.1, 0.1), color=color.orange, make_trail=True)
     
     # Condições iniciais
@@ -80,36 +80,28 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
     b   = 6 * math.pi * eta * r  # coeficiente de Stokes
     print(f"b: {b} N·s/m m: {m:.6f} kg v0: {v0} m/s Densidade: {Densidade:.6f} g/cm^3\n")
 
-
-    # Vel da bolinha nos eixos (derivada da aceleração de newton)
-    v0_x = v0 * math.cos(theta)
-    v0_y = v0 * math.sin(theta)
-
-    v_x = v0_x * math.exp(-b / m * t) # vel eixo x
-    v_y = v0_y + (g.y * m / b) * (math.exp(-b / m * t) - 1) # vel eixo y
-
-    print(f"Vel em x: {v_x} Vel em y: {v_y}")
-    bola.v = vector(v_x, v_y, 0)
-    
+  
+    bola.v = vector(v0 * math.cos(theta), v0 * math.sin(theta), 0)
+    bola.pos = vector(0, altura_inicial, 0)  
     
     lista_alturas = []
     lista_distancias = []
     soma_alturas = 0
     soma_distancias = 0
 
-    altura_maxima_atual = bola.pos.y
-    posicao_x_anterior = bola.pos.x
+    x0_t = bola.pos.x # pos init x
+    y0_t = bola.pos.y # pos init y
+    posicao_x_anterior = x0_t
     detectando_altura = True
 
     quicadas = 0
     
-    h_max_anterior = bola.pos.y
-    lista_alturas.append(h_max_anterior)
-    
+    lista_alturas.append(y0_t)
+    time.sleep(2)
     while True:
         
-        rate(750)
-       
+        rate(750) 
+
         # Atualização da vel e posição da bola
         a_drag   = - (b/m) * bola.v       # vetor de aceleração de arrasto
         a_x = a_drag.x       # aceleração total em x
@@ -120,9 +112,10 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
         bola.v += a_total * dt
         bola.pos += bola.v * dt
         t += dt
+
+        print(f"X(t) = {bola.pos.x:.2f} Y(t) = {bola.pos.y:.2f}; a total {a_total}; v total {bola.v}")
         
         solo.pos.x = bola.pos.x # Pos do solo
-
 
         # Tratar razão errada
         if razao < 0 or razao > 1:
@@ -132,7 +125,7 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
             if quicadas > 5: return
         
         # ----- DETECTAR ALTURA MÁXIMA -----
-        if detectando_altura and bola.v.y < 1e-5: # margem de erro, v nunca zera
+        if detectando_altura and bola.v.y < 0: # ao inves de verificar vel, ver quando vetor y troca de sinal
             h_max_quicada = bola.pos.y
             lista_alturas.append(h_max_quicada)
             soma_alturas += bola.pos.y
@@ -141,9 +134,14 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
         # ----- VERIFICA COLISÃO COM SOLO -----
         if bola.pos.y <= solo.pos.y + bola.radius and bola.v.y < 0:
 
+            bola.pos.y = solo.pos.y + bola.radius # reposicionar bolinha
+
+            # Nova velocidade e energia reduzida 
+            bola.v = vector(razao * bola.v.x, razao * -bola.v.y, 0)
+            print(f"Vel pós razão: {bola.v}")
+
             quicadas += 1
             detectando_altura = True # Permite detectar prox altura
-            bola.pos.y = solo.pos.y + bola.radius # att pos bolinha para acima solo
 
             # Salvar distância horizontal desde a última quicada
             distancia_quicada = abs(bola.pos.x - posicao_x_anterior)
@@ -151,22 +149,20 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
             soma_distancias += distancia_quicada
             posicao_x_anterior = bola.pos.x
 
-            # Velocidade  
-            vx = bola.v.x
-            vy = razao * bola.v.y
-
-            # Nova velocidade e energia reduzida (y invertido)
-            bola.v = vector(vx, -vy, 0)
-
-            if h_max_anterior != 0:
-                erro_a = abs(h_max_quicada - h_max_anterior) 
+            if len(lista_alturas) != 0:
+                if len(lista_alturas) == 1: erro_a = abs(h_max_quicada - y0_t)
+                else: erro_a = abs(h_max_quicada - lista_alturas[quicadas-1])
 
             print(f"Quicada {quicadas}: Altura = {h_max_quicada}") 
             print(f"Erro Relativo = {erro_a:.4f}")
             
-            if erro_a < 1e-1:
+            if erro_a < 1e-5:
                 print("Erro relativo abaixo do limiar. Encerrando simulação.")
                 break
+            elif h_max_quicada < 0:
+                print("Erro quicada com solo. Encerrando simulação.")
+                break
+
 
 
     plot_exp(lista_alturas,lista_distancias)
@@ -211,7 +207,7 @@ def printa_g(var_planeta,var_bolinha,resultado_texto,v0_entry):
 
 def plot_exp(lista_alturas,lista_distancias):
 
-    if not lista_alturas or len(lista_alturas) < 2:
+    if not lista_alturas or len(lista_alturas) <= 3:
         print("Alturas insuficientes para plotagem.")
         return
 
@@ -219,13 +215,9 @@ def plot_exp(lista_alturas,lista_distancias):
     h_0 = lista_alturas[0]
     lista_distancias = [0] + lista_distancias
 
-    # Cálculo do valor de λ para cada altura usando a fórmula
-    lambda_vals = np.log(h_0 / np.array(lista_alturas[1:])) / np.array(lista_distancias[1:])  # λ = − ln(h0/h(x)) / x
-    print("Lambdas:",len(lambda_vals), lambda_vals)
-
    
     grafico_a = graph(title='Valor de Altura (m) vs Quiques',
-                    xtitle='Quiques', ytitle='Altura',
+                    xtitle='Quiques', ytitle='Altura (m)',
                     width=500, height=300, background=color.white)
 
 
@@ -237,7 +229,7 @@ def plot_exp(lista_alturas,lista_distancias):
         curva_altura.plot(i, h)
 
   
-    grafico_b = graph(title='Valor de Distancia vs Quiques',
+    grafico_b = graph(title='Valor de Distancia (m) vs Quiques',
                     xtitle='Quiques', ytitle='Distancia (m)',
                     width=500, height=300, background=color.white)
 
