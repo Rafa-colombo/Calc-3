@@ -1,5 +1,5 @@
 from function import *
-import tkinter as tk
+
 
 # Criando a interface Tkinter
 janela = tk.Tk()
@@ -45,10 +45,10 @@ tk.OptionMenu(frame_menus, var_bolinha, *Materiais_bolinha).pack(side=tk.LEFT, p
 frame_botoes = tk.Frame(janela)
 frame_botoes.pack(pady=10)
 
-tk.Button(frame_botoes, text="Iniciar Simulação (Simples)", 
+tk.Button(frame_botoes, text="Iniciar Simulação", 
         command=lambda: simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_entry,v0_entry,usar_coef_material.get())
         ).pack(side=tk.LEFT, padx=10)
-tk.Button(frame_botoes, text="Simulação (g)", 
+tk.Button(frame_botoes, text="Print", 
         command=lambda: printa_g(var_planeta, var_bolinha, resultado_texto, v0_entry)
         ).pack(side=tk.LEFT, padx=10)
 

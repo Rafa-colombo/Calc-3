@@ -2,8 +2,8 @@ from vpython import *
 import math
 import time
 import tkinter as tk
+from tkinter import ttk
 import numpy as np
-
 
 
 
@@ -77,7 +77,7 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
     r   = bola.radius        # raio da bola [m]
     m   = ((4/3) * math.pi * math.pow(r, 3))*float(Densidade)      # Volume * Densidade
     eta = 1.81e-5            # viscosidade do ar [Pa·s]
-    b   = 6 * math.pi * eta * r  # coeficiente de Stokes
+    b = 6 * math.pi * eta * r  # coeficiente de Stokes
     print(f"b: {b} N·s/m m: {m:.6f} kg v0: {v0} m/s Densidade: {Densidade:.6f} g/cm^3\n")
 
   
@@ -156,7 +156,7 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
             print(f"Quicada {quicadas}: Altura = {h_max_quicada}") 
             print(f"Erro Relativo = {erro_a:.4f}")
             
-            if erro_a < 1e-5:
+            if erro_a < 1e-3:
                 print("Erro relativo abaixo do limiar. Encerrando simulação.")
                 break
             elif h_max_quicada < 0:
@@ -166,24 +166,24 @@ def simulacao_visual(var_planeta,var_bolinha,resultado_texto,razao_entry,altura_
 
 
     plot_exp(lista_alturas,lista_distancias)
-    print(f"\nAltura inicial(1): {altura_inicial} metros")
-    print(f"Razão(1): {razao}")
-    print(f"Número de movimentos(1): {quicadas}")
-    print(f"\nSoma geométrica das alturas(1): {soma_alturas:.2f} metros")
-    print(f"Soma geométrica das distâncias(1): {soma_distancias:.2f} metros")
+    print(f"\nAltura inicial: {altura_inicial} metros")
+    print(f"Razão: {razao}")
+    print(f"Número de movimentos: {quicadas}")
+    print(f"\nSoma geométrica das alturas: {soma_alturas:.2f} metros")
+    print(f"Soma geométrica das distâncias: {soma_distancias:.2f} metros")
 
     # Atualizando a área de resultados no Tkinter
     resultado_texto.config(state=tk.NORMAL)  # Habilita edição no Text
     resultado_texto.delete(1.0, tk.END)  # Limpa os resultados anteriores
     resultado_texto.insert(tk.END, 
-        f"Altura inicial(1): {altura_inicial} metros\n"
-        f"Razão(1): {razao}\n"
-        f"Número de movimentos(1): {quicadas-1}\n"
+        f"Altura inicial: {altura_inicial} metros\n"
+        f"Razão: {razao}\n"
+        f"Número de movimentos: {quicadas}\n"
         f"--------------\n"
         f"Gravidade: {gravidade}\n"
         f"Planeta: {planeta}\n"
-        f"Soma geométrica das alturas(1): {soma_alturas:.2f} metros\n"
-        f"Soma geométrica das distâncias(1): {soma_distancias:.2f} metros\n"
+        f"Soma geométrica das alturas: {soma_alturas:.2f} metros\n"
+        f"Soma geométrica das distâncias: {soma_distancias:.2f} metros\n"
         f"Arrasto b: {b:} N·s/m\nMassa: {m:.6f} kg\nv0: {v0:.6f} m/s"
     )
     resultado_texto.config(state=tk.DISABLED)  # Bloqueia edição do Text
@@ -196,13 +196,16 @@ def printa_g(var_planeta,var_bolinha,resultado_texto,v0_entry):
     razao = Materiais_bolinha[material]["coef_restituicao"]
     gravidade = Objetos_espaciais[planeta]
     massa =((4/3) * math.pi * math.pow(0.2, 3))*float(Densidade)
+    r = 0.1
+    eta = 1.81e-5            # viscosidade do ar [Pa·s]
+    b = 6 * math.pi * eta * r
 
     resultado_texto.config(state=tk.NORMAL)  # Habilita edição no Text
     resultado_texto.delete(1.0, tk.END)  # Limpa os resultados anteriores
     resultado_texto.insert(tk.END, f"Gravidade: {gravidade} \n"
         f"Planeta: {planeta} \n"
-        f"Massa da bolinha: {massa:.3f} kg\nDensidade: {Densidade:.3f}"  
-    )
+        f"Massa da bolinha: {massa:.3f}kg\nDensidade: {Densidade:.3f}g/cm^3\nb: {b}N·s/m\nb -> Stokes considerando raio {r}m e viscosidade {eta}(padrão)"  
+    ) 
 
 
 def plot_exp(lista_alturas,lista_distancias):
@@ -225,7 +228,7 @@ def plot_exp(lista_alturas,lista_distancias):
 
 
     for i, h in enumerate(lista_alturas[1:]):
-        if i == 1: print("Alturas fornecidas:",len(lista_alturas), lista_alturas)
+        if i == 1: print("Alturas fornecidas:", [f"{x:.2f}" for x in lista_alturas], len(lista_alturas))
         curva_altura.plot(i, h)
 
   
@@ -236,5 +239,30 @@ def plot_exp(lista_alturas,lista_distancias):
     curva_distancia  = gcurve(graph=grafico_b,color=color.red, label='Distancia (m) vs Quiques')
 
     for i, d in enumerate(lista_distancias[1:]):
-        if i == 1: print("Distancias fornecidas:",len(lista_distancias), lista_distancias)
+        if i == 1: print("Alturas fornecidas:", [f"{x:.2f}" for x in lista_distancias], len(lista_distancias))
         curva_distancia.plot(i, d)
+
+    mostrar_tabela(lista_alturas,lista_distancias)
+
+
+
+
+def mostrar_tabela(lista_alturas, lista_distancias):
+    janela = tk.Toplevel()
+    janela.title("Tabela de Alturas e Distâncias")
+
+    colunas = ('Quique', 'Altura (m)', 'Distância (m)')
+    tabela = ttk.Treeview(janela, columns=colunas, show='headings')
+
+    for col in colunas:
+        tabela.heading(col, text=col)
+        tabela.column(col, width=100, anchor='center')
+
+    for i in range(len(lista_alturas)):
+        tabela.insert('', 'end', values=(i, f"{lista_alturas[i]:.2f}", f"{lista_distancias[i]:.2f}"))
+
+    tabela.pack(expand=True, fill='both')
+
+    scrollbar = ttk.Scrollbar(janela, orient="vertical", command=tabela.yview)
+    tabela.configure(yscroll=scrollbar.set)
+    scrollbar.pack(side='right', fill='y')
