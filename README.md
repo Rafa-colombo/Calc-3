@@ -10,6 +10,6 @@ A simulação será iniciada automaticamente.
 
 
 ❌ Caso você não tenha o Python instalado:
-Baixe e descompacte exe.zip no drive.  
+Baixe e descompacte exe.zip no drive(https://drive.google.com/drive/folders/1hrkQ6KT9Tzk2gR-ZWeA1-NuMl6duYgnH?usp=sharing).  
 Dê dois cliques no arquivo start.bat.  
 O programa será executado utilizando o Python portátil que acompanha o projeto (não é necessária instalação).
