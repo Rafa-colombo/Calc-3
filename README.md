@@ -4,6 +4,7 @@ Projeto conjunto de calculo 3 em python. Implementação de um programa que simu
 📄 Instruções para Execução da Simulação:
 
 ✅ Caso você já tenha o Python instalado no seu computador:  
+Rode o comando pip install -r requirements.txt no cmd para baixar pré requisitos  
 Localize o arquivo rodar.bat na pasta do projeto.  
 Dê dois cliques sobre ele.  
 A simulação será iniciada automaticamente.  
