@@ -1,5 +1,5 @@
 # Calc-3
-Projeto conjunto de calculo 3 em python. Implementação de um programa que simula lançamento de uma bola e seus movimentos em um plano 3D.
+Projeto de calculo 3 e física em python. Implementação de um programa que simula lançamento de uma bola e seus movimentos em um plano 3D e plota razão exponencial.
 
 📄 Instruções para Execução da Simulação:
 
