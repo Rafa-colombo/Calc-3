@@ -9,7 +9,8 @@ Dê dois cliques sobre ele.
 A simulação será iniciada automaticamente.  
 
 
-❌ Caso você não tenha o Python instalado:
-Acesse a pasta exe incluída no projeto.  
+❌ Caso você não tenha o Python instalado:  
+Acesse o drive (https://drive.google.com/drive/u/1/folders/1hrkQ6KT9Tzk2gR-ZWeA1-NuMl6duYgnH).   
+Extraia a pasta exe_vLeve.zip incluída no projeto.  
 Dê dois cliques no arquivo start.bat.  
 O programa será executado utilizando o Python portátil que acompanha o projeto (não é necessária instalação).
